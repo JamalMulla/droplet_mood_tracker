@@ -69,14 +69,7 @@ pixi run format
 pixi run lint
 ```
 
-### Alternative: Traditional Python Setup
-
-If you prefer not to use pixi:
-
-```bash
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
+> **Note**: This project uses Pixi for modern, reproducible Python dependency management. We embrace the future of Python packaging and don't support legacy pip/venv workflows. Pixi provides cross-platform consistency, faster dependency resolution, and better developer experience.
 
 ## API Documentation
 
@@ -156,18 +149,13 @@ backend/
 │   └── services/         # Business logic
 │       ├── tag_extractor.py
 │       └── summary_generator.py
-├── pixi.toml            # Pixi package management
-└── requirements.txt     # Fallback for pip users
+└── pixi.toml            # Modern dependency management
 ```
 
 ## Testing
 
 ```bash
-# With pixi
 pixi run test
-
-# Or with pytest directly
-pytest
 ```
 
 ## Development Tools

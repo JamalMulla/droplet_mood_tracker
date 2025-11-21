@@ -11,6 +11,7 @@ import {
 import MoodChart from '../components/MoodChart';
 import InsightCard from '../components/InsightCard';
 import TagPill from '../components/TagPill';
+import AISummary from '../components/AISummary';
 
 interface ReportsScreenProps {
   moodData: MoodData;
@@ -25,10 +26,31 @@ const ReportsScreen: React.FC<ReportsScreenProps> = ({ moodData }) => {
 
   const totalEntries = Object.values(moodData).filter((e) => e.mood).length;
 
+  // Calculate date range for AI summary (last 30 days)
+  const { startDate, endDate } = useMemo(() => {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+
+    return {
+      startDate: thirtyDaysAgo.toISOString().split('T')[0],
+      endDate: today.toISOString().split('T')[0],
+    };
+  }, []);
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Your Reports</Text>
+      </View>
+
+      {/* AI Summary */}
+      <View style={styles.section}>
+        <AISummary
+          moodData={moodData}
+          startDate={startDate}
+          endDate={endDate}
+        />
       </View>
 
       {/* Stats Overview */}
