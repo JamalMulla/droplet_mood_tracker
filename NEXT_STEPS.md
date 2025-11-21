@@ -4,7 +4,7 @@
 
 This document outlines the phased approach to building out Squircle's advanced features. Each phase builds on the previous one while maintaining the app's simplicity and usability.
 
-## Phase 1: Timeline/Timestamp Mode ✓ Next
+## Phase 1: Timeline/Timestamp Mode ✅ COMPLETED
 
 **Goal**: Allow multiple entries per day instead of one monolithic note
 
@@ -29,7 +29,7 @@ This document outlines the phased approach to building out Squircle's advanced f
 
 ---
 
-## Phase 2: Enhanced Mood Granularity
+## Phase 2: Enhanced Mood Granularity ✅ COMPLETED
 
 **Goal**: More detailed mood tracking and intensity levels
 
@@ -52,7 +52,7 @@ This document outlines the phased approach to building out Squircle's advanced f
 
 ---
 
-## Phase 3: Activity Tracking UI Structure
+## Phase 3: Activity Tracking UI Structure ✅ COMPLETED
 
 **Goal**: Prepare UI for AI-powered activity extraction (backend integration comes later)
 
@@ -82,7 +82,7 @@ This document outlines the phased approach to building out Squircle's advanced f
 
 ---
 
-## Phase 4: Reports and Insights
+## Phase 4: Reports and Insights ✅ COMPLETED
 
 **Goal**: Provide actionable insights from tracked data
 
@@ -121,41 +121,190 @@ This document outlines the phased approach to building out Squircle's advanced f
 
 ---
 
-## Phase 5: AI Backend Integration (Future)
+## Phase 5: AI Backend Integration ⏳ IN PROGRESS
 
-**Goal**: FastAPI backend for intelligent features
+**Goal**: FastAPI backend with LLM-powered intelligent features
+
+### Overview
+Automatic tag extraction and intelligent summaries powered by LLM. Users write diary entries naturally, and the system automatically:
+- Extracts relevant tags (activities, people, places, emotions)
+- Generates monthly/weekly summaries
+- Provides drill-down analysis by tags
+- Creates narrative insights
+
+### User Flow
+1. User writes: "Went to the gym this morning, did chest and back. Felt great afterwards!"
+2. LLM automatically extracts tags: `gym`, `exercise`, `morning`, `chest`, `back`
+3. Tags stored with entry for aggregation
+4. Later analysis: "In October you went to the gym 10 times - focused on chest (4x), back (3x), legs (3x)"
 
 ### Features
-- AI tag extraction from notes
-- Advanced pattern recognition
-- Activity inference (e.g., "went running" → running tag)
-- Personalized insights
-- Cloud sync and backup
+
+**Automatic Tag Extraction**
+- Parse diary text with LLM
+- Extract activities (gym, running, work, cooking, etc.)
+- Extract people (friends, family, specific names)
+- Extract places (home, office, park, restaurant)
+- Extract context (morning, evening, after work)
+- Confidence scoring for each tag
+
+**Intelligent Summaries**
+- Monthly summaries: "In October you went to the gym 10 times..."
+- Activity breakdowns: "Your gym sessions included: chest 4x, back 3x, legs 3x"
+- Trend analysis: "You exercised more in the first half of the month"
+- Mood-activity correlation: "You felt energetic after 80% of gym sessions"
+
+**Tag-Based Drill-Down**
+- Click on "gym" tag → see all gym-related entries
+- Filter by date range
+- View mood patterns for specific activities
+- Export filtered entries
+
+**Smart Insights**
+- Pattern detection: "You typically go to the gym in the morning"
+- Preference analysis: "You prefer outdoor runs vs treadmill"
+- Seasonal patterns: "You exercised more during summer"
+- Social patterns: "You feel happier on days you see friends"
 
 ### Technical Stack
-- FastAPI backend
-- OpenAI/Anthropic API for NLP
-- PostgreSQL for data storage
-- Redis for caching
-- JWT authentication
+- **Backend**: FastAPI (Python 3.11+)
+- **LLM**: Anthropic Claude API (or OpenAI GPT-4)
+- **Database**: SQLite (local first) → PostgreSQL (production)
+- **Caching**: In-memory (local) → Redis (production)
+- **Authentication**: JWT tokens (future)
 
-### Endpoints
+### API Endpoints
+
+```python
+# Tag Extraction
+POST /api/analyze/tags
+{
+  "text": "Went to the gym this morning...",
+  "date": "2024-01-15",
+  "mood": { "label": "Energetic", "intensity": 4 }
+}
+→ Returns: { "tags": ["gym", "exercise", "morning"], "confidence": 0.95 }
+
+# Generate Summary
+POST /api/summaries/generate
+{
+  "date_range": { "start": "2024-10-01", "end": "2024-10-31" },
+  "entries": [...],
+  "focus": "activities"  // or "mood", "social", "all"
+}
+→ Returns: { "summary": "In October you went to the gym 10 times...", "highlights": [...] }
+
+# Get Tag-Filtered Entries
+GET /api/entries/by-tag?tag=gym&start=2024-10-01&end=2024-10-31
+→ Returns: { "entries": [...], "stats": {...} }
+
+# Batch Analysis (for onboarding existing data)
+POST /api/analyze/batch
+{
+  "entries": [...]
+}
+→ Returns: { "processed": 150, "tags_extracted": 450, "success": true }
 ```
-POST /api/entries/analyze    # Extract tags from text
-GET  /api/insights           # Get AI-generated insights
-POST /api/sync               # Sync local data to cloud
-GET  /api/reports            # Server-side report generation
+
+### Implementation Plan
+
+**Backend Setup**
+1. Create FastAPI project structure
+2. Set up LLM client (Anthropic/OpenAI)
+3. Define data models (Pydantic)
+4. Implement tag extraction logic
+5. Add summary generation
+6. Create API endpoints
+7. Add error handling & retry logic
+
+**LLM Prompt Engineering**
+- Design tag extraction prompt
+- Handle edge cases (typos, slang, abbreviations)
+- Implement tag normalization (gym = gym workout = weight training)
+- Add context awareness (date, mood, previous tags)
+
+**React Native Integration**
+1. Add API client utilities
+2. Create environment config for backend URL
+3. Update DayDetailModal to call tag extraction
+4. Add loading states during LLM processing
+5. Allow manual tag editing after auto-extraction
+6. Implement summary screen
+7. Add offline support (queue requests)
+
+**Data Flow**
 ```
+User saves entry →
+  Call /api/analyze/tags →
+    LLM processes text →
+      Extract tags →
+        Store with entry →
+          Update UI with tags
+```
+
+### Benefits
+- **Zero Manual Work**: Tags appear automatically
+- **Rich Data**: More comprehensive tagging than manual
+- **Intelligent Insights**: LLM generates human-readable summaries
+- **Time-Saving**: Users focus on writing, not categorizing
+- **Consistent**: Same activity always gets same tag
+- **Scalable**: Works with historical data via batch processing
+
+### Challenges & Solutions
+
+**Challenge**: LLM API costs
+- **Solution**: Cache common patterns, batch process, use smaller models for simple extractions
+
+**Challenge**: Latency (LLM takes 1-3 seconds)
+- **Solution**: Async processing, show loading state, allow saving without waiting
+
+**Challenge**: Tag consistency
+- **Solution**: Maintain tag dictionary, normalize variations, provide suggestions
+
+**Challenge**: Privacy concerns
+- **Solution**: Option for local-only processing, clear data policy, no storage of text on server (only tags)
+
+**Challenge**: Offline support
+- **Solution**: Queue requests, process when online, manual tags as fallback
+
+### Development Estimates
+- Backend setup: 2-3 hours
+- LLM integration: 3-4 hours
+- API endpoints: 2-3 hours
+- React Native integration: 3-4 hours
+- Testing & refinement: 2-3 hours
+- **Total**: 12-17 hours (1.5-2 days)
+
+---
+
+## Phase 6: Advanced Analytics & Predictions (Future)
+
+**Goal**: Predictive insights and advanced pattern recognition
+
+### Features
+- Mood prediction based on activities
+- Optimal time suggestions for activities
+- Habit formation tracking
+- Correlation analysis (sleep, weather, exercise → mood)
+- Personalized recommendations
+- Export reports as PDF
+
+### Technical Requirements
+- Machine learning models (scikit-learn)
+- Time series analysis
+- Weather API integration
+- PDF generation
 
 ---
 
 ## Implementation Order
 
-1. **Phase 1** (Now): Timeline Mode - Most impactful for user experience
-2. **Phase 2** (Next): Mood Granularity - Enhances core feature
-3. **Phase 3** (Then): Activity UI - Prepares for AI
-4. **Phase 4** (Then): Reports - Makes data useful
-5. **Phase 5** (Future): Backend - Scales and adds intelligence
+1. **Phase 1** ✅: Timeline Mode - Most impactful for user experience
+2. **Phase 2** ✅: Mood Granularity - Enhances core feature
+3. **Phase 3** ✅: Activity UI - Prepares for AI
+4. **Phase 4** ✅: Reports - Makes data useful
+5. **Phase 5** ⏳: LLM Backend - Intelligent tag extraction and summaries (IN PROGRESS)
+6. **Phase 6** 🔮: Advanced Analytics - Predictions and ML-based insights
 
 ---
 
@@ -171,19 +320,29 @@ GET  /api/reports            # Server-side report generation
 
 ## Development Estimates
 
-| Phase | Complexity | Time Estimate |
-|-------|------------|---------------|
-| Phase 1 | Medium | 2-3 hours |
-| Phase 2 | Low | 1-2 hours |
-| Phase 3 | Medium | 2-3 hours |
-| Phase 4 | High | 4-5 hours |
-| Phase 5 | High | 1-2 weeks |
+| Phase | Complexity | Time Estimate | Status |
+|-------|------------|---------------|--------|
+| Phase 1 | Medium | 2-3 hours | ✅ Complete |
+| Phase 2 | Low | 1-2 hours | ✅ Complete |
+| Phase 3 | Medium | 2-3 hours | ✅ Complete |
+| Phase 4 | High | 4-5 hours | ✅ Complete |
+| Phase 5 | High | 12-17 hours | ⏳ In Progress |
+| Phase 6 | Very High | 2-3 weeks | 🔮 Future |
 
 ---
 
 ## Next Immediate Actions
 
-1. ✓ Create NEXT_STEPS.md (this document)
-2. → Implement Timeline/Timestamp Mode
-3. → Test timeline functionality
-4. → Move to Phase 2
+1. ✅ Create NEXT_STEPS.md (this document)
+2. ✅ Implement Timeline/Timestamp Mode
+3. ✅ Implement Enhanced Mood Granularity
+4. ✅ Implement Activity Tracking UI
+5. ✅ Implement Reports and Insights
+6. ⏳ **NOW**: Create FastAPI backend with LLM integration
+   - Set up FastAPI project structure
+   - Integrate Anthropic Claude API for tag extraction
+   - Implement tag extraction endpoint
+   - Implement summary generation endpoint
+   - Create React Native API client
+   - Integrate automatic tag extraction in app
+   - Add summary generation screen

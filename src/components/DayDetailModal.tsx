@@ -14,6 +14,7 @@ import { DayEntry, Mood, Timestamp } from '../types';
 import MoodPicker from './MoodPicker';
 import TimelineEntry from './TimelineEntry';
 import TagInput from './TagInput';
+import { extractTags } from '../utils/api';
 
 interface DayDetailModalProps {
   visible: boolean;
@@ -38,6 +39,7 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({
   const [tags, setTags] = useState<string[]>(entry?.tags || []);
   const [viewMode, setViewMode] = useState<ViewMode>('note');
   const [editingTimestampId, setEditingTimestampId] = useState<string | null>(null);
+  const [isExtractingTags, setIsExtractingTags] = useState(false);
 
   useEffect(() => {
     setSelectedMood(entry?.mood);
@@ -72,6 +74,30 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({
   const handleDeleteTimestamp = (id: string) => {
     setTimestamps(timestamps.filter(ts => ts.id !== id));
     setEditingTimestampId(null);
+  };
+
+  const handleAutoExtractTags = async () => {
+    const textToAnalyze = viewMode === 'note' ? notes : timestamps.map(ts => ts.content).join(' ');
+
+    if (!textToAnalyze.trim()) {
+      return;
+    }
+
+    setIsExtractingTags(true);
+
+    try {
+      const extractedTags = await extractTags(textToAnalyze, date, selectedMood);
+
+      if (extractedTags.length > 0) {
+        // Merge with existing tags, removing duplicates
+        const uniqueTags = Array.from(new Set([...tags, ...extractedTags]));
+        setTags(uniqueTags);
+      }
+    } catch (error) {
+      console.error('Error extracting tags:', error);
+    } finally {
+      setIsExtractingTags(false);
+    }
   };
 
   const handleSave = () => {
@@ -178,6 +204,24 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({
                 )}
               </View>
             )}
+
+            <View style={styles.aiTagSection}>
+              <View style={styles.aiTagHeader}>
+                <Text style={styles.sectionTitle}>AI Tag Extraction</Text>
+                <TouchableOpacity
+                  style={[styles.aiButton, isExtractingTags && styles.aiButtonDisabled]}
+                  onPress={handleAutoExtractTags}
+                  disabled={isExtractingTags}
+                >
+                  <Text style={styles.aiButtonText}>
+                    {isExtractingTags ? '🤖 Analyzing...' : '✨ Auto-Extract Tags'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.aiHint}>
+                AI will analyze your text and automatically suggest relevant tags
+              </Text>
+            </View>
 
             <TagInput
               tags={tags}
@@ -315,6 +359,38 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
     textAlign: 'center',
+  },
+  aiTagSection: {
+    padding: 20,
+    backgroundColor: '#F8F9FF',
+    borderRadius: 12,
+    marginHorizontal: 20,
+    marginBottom: 10,
+  },
+  aiTagHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  aiButton: {
+    backgroundColor: '#6C63FF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  aiButtonDisabled: {
+    backgroundColor: '#B3B0FF',
+  },
+  aiButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  aiHint: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
   },
   footer: {
     flexDirection: 'row',
