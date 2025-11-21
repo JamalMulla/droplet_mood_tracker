@@ -72,12 +72,14 @@ const PixelsCalendar: React.FC<PixelsCalendarProps> = ({ year, moodData, onDayPr
               const dateStr = formatDate(day);
               const entry = moodData[dateStr];
               const color = entry?.mood?.color;
+              const intensity = entry?.mood?.intensity;
               const today = checkIsToday(day);
 
               return (
                 <DayPixel
                   key={dateStr}
                   color={color}
+                  intensity={intensity}
                   onPress={() => onDayPress(dateStr)}
                   isToday={today}
                 />

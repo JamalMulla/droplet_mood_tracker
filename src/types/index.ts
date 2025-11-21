@@ -1,6 +1,7 @@
 export type Mood = {
   color: string;
   label: string;
+  intensity?: number; // 1-5 scale, 5 being most intense
 };
 
 export type DayEntry = {

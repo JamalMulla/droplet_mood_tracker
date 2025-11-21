@@ -4,16 +4,28 @@ import { DEFAULT_COLOR } from '../constants/moods';
 
 interface DayPixelProps {
   color?: string;
+  intensity?: number; // 1-5 scale
   onPress: () => void;
   isToday?: boolean;
 }
 
-const DayPixel: React.FC<DayPixelProps> = ({ color = DEFAULT_COLOR, onPress, isToday = false }) => {
+const DayPixel: React.FC<DayPixelProps> = ({
+  color = DEFAULT_COLOR,
+  intensity,
+  onPress,
+  isToday = false
+}) => {
+  // Map intensity to opacity: 1=0.3, 2=0.5, 3=0.7, 4=0.85, 5=1.0
+  const getOpacity = () => {
+    if (!intensity || color === DEFAULT_COLOR) return 1;
+    return 0.2 + (intensity * 0.16);
+  };
+
   return (
     <TouchableOpacity
       style={[
         styles.pixel,
-        { backgroundColor: color },
+        { backgroundColor: color, opacity: getOpacity() },
         isToday && styles.todayBorder,
       ]}
       onPress={onPress}
