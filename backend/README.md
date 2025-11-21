@@ -13,21 +13,35 @@ FastAPI backend for Squircle mood tracking app with LLM-powered tag extraction a
 
 ### Prerequisites
 
-- Python 3.11+
-- pip or poetry
+- [Pixi](https://pixi.sh) - Modern package manager for Python
+  ```bash
+  # Install pixi (macOS/Linux)
+  curl -fsSL https://pixi.sh/install.sh | bash
+
+  # Or using Homebrew
+  brew install pixi
+
+  # Windows (PowerShell)
+  iwr -useb https://pixi.sh/install.ps1 | iex
+  ```
 
 ### Installation
 
 ```bash
 cd backend
-pip install -r requirements.txt
+
+# Install all dependencies (pixi handles everything)
+pixi install
+
+# Or install with dev dependencies
+pixi install --environment dev
 ```
 
 ### Environment Variables
 
 Create a `.env` file:
 
-```
+```env
 ANTHROPIC_API_KEY=your_api_key_here
 # OR
 OPENAI_API_KEY=your_api_key_here
@@ -39,11 +53,29 @@ ENVIRONMENT=development
 ### Run
 
 ```bash
-# Development
-uvicorn app.main:app --reload
+# Development (with auto-reload)
+pixi run dev
 
 # Production
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+pixi run start
+
+# Run tests
+pixi run test
+
+# Format code
+pixi run format
+
+# Lint code
+pixi run lint
+```
+
+### Alternative: Traditional Python Setup
+
+If you prefer not to use pixi:
+
+```bash
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
 
 ## API Documentation
@@ -124,11 +156,28 @@ backend/
 │   └── services/         # Business logic
 │       ├── tag_extractor.py
 │       └── summary_generator.py
-└── requirements.txt
+├── pixi.toml            # Pixi package management
+└── requirements.txt     # Fallback for pip users
 ```
 
 ## Testing
 
 ```bash
+# With pixi
+pixi run test
+
+# Or with pytest directly
 pytest
+```
+
+## Development Tools
+
+Pixi provides convenient tasks for development:
+
+```bash
+pixi run dev        # Start dev server with auto-reload
+pixi run start      # Start production server
+pixi run test       # Run pytest
+pixi run format     # Format code with black
+pixi run lint       # Lint code with ruff
 ```

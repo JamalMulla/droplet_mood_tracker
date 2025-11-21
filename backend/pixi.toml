@@ -1,0 +1,47 @@
+[project]
+name = "squircle-backend"
+version = "1.0.0"
+description = "LLM-powered mood tracking API with automatic tag extraction and intelligent summaries"
+authors = ["Squircle Team"]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
+
+[dependencies]
+python = ">=3.11,<3.13"
+fastapi = ">=0.109.0,<0.110"
+uvicorn = { version = ">=0.27.0,<0.28", extras = ["standard"] }
+pydantic = ">=2.5.3,<3"
+pydantic-settings = ">=2.1.0,<3"
+python-dotenv = ">=1.0.0,<2"
+anthropic = ">=0.18.1,<0.19"
+httpx = ">=0.26.0,<0.27"
+python-multipart = ">=0.0.6,<0.1"
+
+[feature.dev.dependencies]
+pytest = ">=7.4.0"
+pytest-asyncio = ">=0.21.0"
+black = ">=23.0.0"
+ruff = ">=0.1.0"
+
+[tasks]
+# Run the development server
+dev = "uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
+
+# Run the production server
+start = "uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+# Run tests
+test = "pytest"
+
+# Format code
+format = "black app/"
+
+# Lint code
+lint = "ruff check app/"
+
+# Type check
+typecheck = "mypy app/"
+
+[environments]
+default = { solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }

@@ -209,13 +209,14 @@ POST /api/analyze/batch
 ### Implementation Plan
 
 **Backend Setup**
-1. Create FastAPI project structure
+1. Create FastAPI project structure with Pixi package management
 2. Set up LLM client (Anthropic/OpenAI)
 3. Define data models (Pydantic)
 4. Implement tag extraction logic
 5. Add summary generation
 6. Create API endpoints
 7. Add error handling & retry logic
+8. Configure pixi.toml with dev tools (pytest, black, ruff)
 
 **LLM Prompt Engineering**
 - Design tag extraction prompt

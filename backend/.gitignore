@@ -42,3 +42,7 @@ htmlcov/
 *.db
 *.sqlite
 *.sqlite3
+
+# Pixi
+.pixi/
+pixi.lock
