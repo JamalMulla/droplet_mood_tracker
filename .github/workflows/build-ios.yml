@@ -34,23 +34,30 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - name: Check if iOS directory exists
-        id: check_ios
+      - name: Generate iOS directory if missing
         run: |
-          if [ -d "ios" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
+          if [ ! -d "ios" ]; then
+            echo "iOS directory not found, generating native code..."
+            npx react-native init TempProject --skip-install
+            mv TempProject/ios ./
+            rm -rf TempProject
+
+            # Update bundle identifier in iOS files
+            find ios -type f \( -name "*.pbxproj" -o -name "*.plist" -o -name "*.m" -o -name "*.h" \) | \
+              xargs sed -i '' 's/TempProject/Squircle/g' 2>/dev/null || \
+              xargs sed -i 's/TempProject/Squircle/g'
+
+            echo "iOS directory generated successfully"
           else
-            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "iOS directory already exists"
           fi
 
       - name: Install CocoaPods dependencies
-        if: steps.check_ios.outputs.exists == 'true'
         run: |
           cd ios
           pod install
 
       - name: Build iOS Archive
-        if: steps.check_ios.outputs.exists == 'true'
         run: |
           cd ios
           xcodebuild -workspace Squircle.xcworkspace \
@@ -67,7 +74,6 @@ jobs:
       # - EXPORT_OPTIONS_PLIST
 
       - name: Export IPA
-        if: steps.check_ios.outputs.exists == 'true'
         run: |
           cd ios
           xcodebuild -exportArchive \
@@ -76,7 +82,6 @@ jobs:
             -exportOptionsPlist exportOptions.plist
 
       - name: Upload IPA artifact
-        if: steps.check_ios.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: app-release-ipa
@@ -84,7 +89,6 @@ jobs:
           retention-days: 30
 
       - name: Create Release Summary
-        if: steps.check_ios.outputs.exists == 'true'
         run: |
           echo "## 🍎 iOS Build Successful!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -99,15 +103,3 @@ jobs:
           echo "### Note:" >> $GITHUB_STEP_SUMMARY
           echo "iOS builds require Apple Developer certificates." >> $GITHUB_STEP_SUMMARY
           echo "See docs/IOS_BUILD_SETUP.md for configuration details." >> $GITHUB_STEP_SUMMARY
-
-      - name: Skip Build Notice
-        if: steps.check_ios.outputs.exists == 'false'
-        run: |
-          echo "## ⚠️ iOS Directory Not Found" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The \`ios\` directory does not exist in this repository." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### To enable iOS builds:" >> $GITHUB_STEP_SUMMARY
-          echo "1. Run \`npx react-native init YourApp\` to generate native directories" >> $GITHUB_STEP_SUMMARY
-          echo "2. Or copy the contents from an existing React Native ios directory" >> $GITHUB_STEP_SUMMARY
-          echo "3. Commit and push the ios directory" >> $GITHUB_STEP_SUMMARY
