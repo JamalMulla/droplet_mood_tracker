@@ -51,13 +51,20 @@ jobs:
         run: |
           if [ ! -d "android" ]; then
             echo "Android directory not found, generating native code..."
-            npx react-native init TempProject --skip-install
-            mv TempProject/android ./
-            rm -rf TempProject
+
+            # Create temp project outside current repo
+            cd /tmp
+            npx react-native@latest init TempProject --skip-install
+
+            # Move android directory to the repo
+            cd $GITHUB_WORKSPACE
+            mv /tmp/TempProject/android ./
+
+            # Clean up temp project
+            rm -rf /tmp/TempProject
 
             # Update package name in android files
-            find android -type f -name "*.java" -o -name "*.xml" -o -name "*.gradle" | \
-              xargs sed -i 's/com\.tempproject/com.squircle/g'
+            find android -type f \( -name "*.java" -o -name "*.kt" -o -name "*.xml" -o -name "*.gradle" \) -exec sed -i 's/com\.tempproject/com.squircle/g' {} +
 
             echo "Android directory generated successfully"
           else
