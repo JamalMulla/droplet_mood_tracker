@@ -1,0 +1,87 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch: # Allow manual triggers
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up Ruby (for CocoaPods)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios
+          pod install
+
+      - name: Build iOS Archive
+        run: |
+          cd ios
+          xcodebuild -workspace Squircle.xcworkspace \
+            -scheme Squircle \
+            -configuration Release \
+            -archivePath $PWD/build/Squircle.xcarchive \
+            archive
+
+      # Note: Exporting IPA requires certificates and provisioning profiles
+      # You'll need to add these as GitHub Secrets:
+      # - APPLE_CERTIFICATE_BASE64
+      # - APPLE_CERTIFICATE_PASSWORD
+      # - APPLE_PROVISIONING_PROFILE_BASE64
+      # - EXPORT_OPTIONS_PLIST
+
+      - name: Export IPA
+        run: |
+          cd ios
+          xcodebuild -exportArchive \
+            -archivePath $PWD/build/Squircle.xcarchive \
+            -exportPath $PWD/build \
+            -exportOptionsPlist exportOptions.plist
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-ipa
+          path: ios/build/*.ipa
+          retention-days: 30
+
+      - name: Create Release Summary
+        run: |
+          echo "## 🍎 iOS Build Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Download IPA:" >> $GITHUB_STEP_SUMMARY
+          echo "Download from artifacts above" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### To Install IPA on Your iPhone:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download the IPA artifact" >> $GITHUB_STEP_SUMMARY
+          echo "2. Use Xcode or TestFlight to install" >> $GITHUB_STEP_SUMMARY
+          echo "3. Or upload to App Store Connect for distribution" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Note:" >> $GITHUB_STEP_SUMMARY
+          echo "iOS builds require Apple Developer certificates." >> $GITHUB_STEP_SUMMARY
+          echo "See docs/IOS_BUILD_SETUP.md for configuration details." >> $GITHUB_STEP_SUMMARY

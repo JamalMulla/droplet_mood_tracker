@@ -77,6 +77,33 @@ npm run android
 npm start
 ```
 
+## 📲 Install on Your Phone
+
+### Option 1: Download Pre-Built APK (Android - Easiest!)
+
+1. Go to [**Actions**](../../actions/workflows/build-android.yml) tab
+2. Click the latest successful build
+3. Download **app-release-apk** artifact
+4. Transfer to your Android phone and install
+
+**Full guide**: See [docs/MOBILE_BUILDS.md](docs/MOBILE_BUILDS.md)
+
+### Option 2: Build Locally
+
+**Android:**
+```bash
+cd android
+./gradlew assembleRelease
+# APK at: android/app/build/outputs/apk/release/app-release.apk
+```
+
+**iOS:**
+```bash
+cd ios
+pod install
+# Then build in Xcode
+```
+
 ## Usage
 
 1. **View Calendar**: The main screen shows a pixel grid representing all days of the current year
