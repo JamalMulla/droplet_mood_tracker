@@ -41,7 +41,7 @@ jobs:
 
             # Create temp project outside current repo
             cd /tmp
-            npx react-native@latest init TempProject --skip-install
+            npx @react-native-community/cli@latest init TempProject --skip-install
 
             # Move ios directory to the repo
             cd $GITHUB_WORKSPACE
