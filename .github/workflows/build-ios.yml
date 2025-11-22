@@ -22,7 +22,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
@@ -33,6 +33,31 @@ jobs:
         with:
           ruby-version: '3.2'
           bundler-cache: true
+
+      - name: Generate iOS directory if missing
+        run: |
+          if [ ! -d "ios" ]; then
+            echo "iOS directory not found, generating native code..."
+
+            # Create temp project outside current repo
+            cd /tmp
+            npx @react-native-community/cli@latest init TempProject --skip-install
+
+            # Move ios directory to the repo
+            cd $GITHUB_WORKSPACE
+            mv /tmp/TempProject/ios ./
+
+            # Clean up temp project
+            rm -rf /tmp/TempProject
+
+            # Update bundle identifier in iOS files (macOS uses different sed syntax)
+            find ios -type f \( -name "*.pbxproj" -o -name "*.plist" -o -name "*.m" -o -name "*.h" -o -name "*.swift" \) -exec sed -i '' 's/TempProject/Squircle/g' {} + 2>/dev/null || \
+              find ios -type f \( -name "*.pbxproj" -o -name "*.plist" -o -name "*.m" -o -name "*.h" -o -name "*.swift" \) -exec sed -i 's/TempProject/Squircle/g' {} +
+
+            echo "iOS directory generated successfully"
+          else
+            echo "iOS directory already exists"
+          fi
 
       - name: Install CocoaPods dependencies
         run: |

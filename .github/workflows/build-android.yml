@@ -22,7 +22,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
@@ -47,8 +47,32 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Generate Android directory if missing
+        run: |
+          if [ ! -d "android" ]; then
+            echo "Android directory not found, generating native code..."
+
+            # Create temp project outside current repo
+            cd /tmp
+            npx @react-native-community/cli@latest init TempProject --skip-install
+
+            # Move android directory to the repo
+            cd $GITHUB_WORKSPACE
+            mv /tmp/TempProject/android ./
+
+            # Clean up temp project
+            rm -rf /tmp/TempProject
+
+            # Update package name in android files
+            find android -type f \( -name "*.java" -o -name "*.kt" -o -name "*.xml" -o -name "*.gradle" \) -exec sed -i 's/com\.tempproject/com.squircle/g' {} +
+
+            echo "Android directory generated successfully"
+          else
+            echo "Android directory already exists"
+          fi
+
       - name: Make gradlew executable
-        run: cd android && chmod +x ./gradlew
+        run: chmod +x android/gradlew
 
       - name: Build Android APK
         run: cd android && ./gradlew assembleRelease

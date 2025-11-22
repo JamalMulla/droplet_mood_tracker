@@ -1,4 +1,15 @@
 {
   "name": "squircle",
-  "displayName": "Squircle"
+  "displayName": "Squircle",
+  "react-native": {
+    "project": {
+      "android": {
+        "sourceDir": "./android",
+        "packageName": "com.squircle"
+      },
+      "ios": {
+        "sourceDir": "./ios"
+      }
+    }
+  }
 }
